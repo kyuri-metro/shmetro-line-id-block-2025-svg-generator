@@ -2,6 +2,7 @@ import { SHMETRO_LINE_COLORS } from '@kyuri-metro/shmetro-palette'
 
 export type LineIdBlockProps = {
   background?: string
+  fontFamily?: string
   foreground?: string
   height?: number
   lineNumber: string | number
@@ -31,6 +32,16 @@ type BadgeLayout = {
 
 const FALLBACK_BACKGROUND = '#666666'
 const FALLBACK_FOREGROUND = '#000000'
+export const DEFAULT_LINE_ID_BLOCK_FONT_FAMILY = 'Arial, Helvetica, sans-serif'
+
+function escapeXml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;')
+}
 
 function parseLineNumber(lineNumber: string | number) {
   const lineString = String(lineNumber).trim()
@@ -61,7 +72,7 @@ function getBadgePalette(lineNumber: string | number, foreground?: string, backg
   }
 }
 
-function measureText(lineString: string, fontSize: number): TextMeasure {
+function measureText(lineString: string, fontSize: number, fontFamily: string): TextMeasure {
   const canvas = document.createElement('canvas')
   const context = canvas.getContext('2d')
 
@@ -69,7 +80,7 @@ function measureText(lineString: string, fontSize: number): TextMeasure {
     throw new Error('Failed to create canvas context')
   }
 
-  context.font = `${fontSize}px Arial`
+  context.font = `${fontSize}px ${fontFamily}`
 
   const metrics = context.measureText(lineString)
 
@@ -103,13 +114,13 @@ function scaleLayout(layout: BadgeLayout, nextHeight: number): BadgeLayout {
   }
 }
 
-function getBaseLayout(lineId: number, lineString: string): BadgeLayout {
+function getBaseLayout(lineId: number, lineString: string, fontFamily: string): BadgeLayout {
   const height = 100
   const isSingleDigit = lineId < 10
   const width = isSingleDigit ? 85 : 100
   const fontSize = height * 0.9
   const widthScale = lineId >= 20 && lineId % 10 !== 1 ? 0.9 : 1
-  const measured = measureText(lineString, fontSize)
+  const measured = measureText(lineString, fontSize, fontFamily)
   const realWidth = measured.actualBoundingBoxRight + measured.actualBoundingBoxLeft
   const expectedWidth = lineId === 11 ? 65 : lineId >= 20 && lineId % 10 === 1 ? 74 : 81
   const scaledExpectedWidth = expectedWidth / widthScale
@@ -153,7 +164,13 @@ function formatTransform(transform?: string) {
   return ` transform="${transform}"`
 }
 
-export function generateLineIdBlock2025Svg({ background, foreground, height = 100, lineNumber }: LineIdBlockProps) {
+export function generateLineIdBlock2025Svg({
+  background,
+  fontFamily = DEFAULT_LINE_ID_BLOCK_FONT_FAMILY,
+  foreground,
+  height = 100,
+  lineNumber,
+}: LineIdBlockProps) {
   const parsed = parseLineNumber(lineNumber)
 
   if (!parsed) {
@@ -161,7 +178,7 @@ export function generateLineIdBlock2025Svg({ background, foreground, height = 10
   }
 
   const palette = getBadgePalette(lineNumber, foreground, background)
-  const layout = scaleLayout(getBaseLayout(parsed.lineId, parsed.lineString), height)
+  const layout = scaleLayout(getBaseLayout(parsed.lineId, parsed.lineString, fontFamily), height)
 
-  return `<svg width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="${layout.width}" height="${layout.height}" fill="${palette.background}"/><text x="${layout.textLayout.x}" y="${layout.textLayout.y}" fill="${palette.foreground}" font-family="Arial" font-size="${layout.textLayout.fontSize}px"${formatLetterSpacing(layout.textLayout.letterSpacing)}${formatTransform(layout.textLayout.transform)}>${layout.text}</text></svg>`
+  return `<svg width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="${layout.width}" height="${layout.height}" fill="${palette.background}"/><text x="${layout.textLayout.x}" y="${layout.textLayout.y}" fill="${palette.foreground}" font-family="${escapeXml(fontFamily)}" font-size="${layout.textLayout.fontSize}px"${formatLetterSpacing(layout.textLayout.letterSpacing)}${formatTransform(layout.textLayout.transform)}>${layout.text}</text></svg>`
 }
