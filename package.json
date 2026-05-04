@@ -24,6 +24,13 @@
   "publishConfig": {
     "access": "public"
   },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.3"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
