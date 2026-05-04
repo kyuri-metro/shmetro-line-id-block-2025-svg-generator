@@ -148,6 +148,18 @@ function getBaseLayout(lineId: number, lineString: string, fontFamily: string): 
   }
 }
 
+export function getLineIdBlockWidth(lineNumber: string | number, height = 100) {
+  const parsed = parseLineNumber(lineNumber)
+
+  if (!parsed) {
+    return null
+  }
+
+  const baseWidth = parsed.lineId < 10 ? 85 : 100
+
+  return (baseWidth / 100) * height
+}
+
 function formatLetterSpacing(letterSpacing?: number) {
   if (letterSpacing === undefined) {
     return ''
